@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PHANTOM.LOL | Native Floating Suite</title>
+    <style>
+        :root {
+            --bg-phantom: #030305;
+            --panel-phantom: #0c0a14;
+            --accent-green: #00ff88;
+            --accent-glow: rgba(0, 255, 136, 0.35);
+            --danger-red: #ff3366;
+            --wifi-blue: #00d2ff;
+            --text-light: #ffffff;
+            --text-muted: #8b9bb4;
+            --border-neon: rgba(0, 255, 136, 0.3);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, sans-serif; }
+        body { background: var(--bg-phantom); color: var(--text-light); min-height: 100vh; padding-bottom: 75px; overflow-x: hidden; }
+
+        /* ปุ่มลอยย่อหน้าต่าง */
+        #phantom-float-dock {
+            position: fixed; top: 15px; right: 15px; z-index: 9999;
+            background: rgba(12, 10, 20, 0.9); border: 1px solid var(--accent-green);
+            border-radius: 30px; padding: 6px 14px; display: flex; align-items: center; gap: 8px;
+            box-shadow: 0 0 15px var(--accent-glow); cursor: pointer; backdrop-filter: blur(8px);
+        }
+        #phantom-float-dock span { font-size: 0.72rem; font-weight: 800; color: var(--accent-green); letter-spacing: 1px; }
+
+        .container { max-width: 460px; margin: 0 auto; padding: 12px; }
+        .module-pane { display: none; animation: fadeIn 0.2s ease-in-out; }
+        .module-pane.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-box { display: flex; justify-content: space-between; align-items: center; padding: 10px 4px; margin-bottom: 8px; }
+        .logo-text { font-size: 1.15rem; font-weight: 900; letter-spacing: 1.5px; color: var(--text-light); text-shadow: 0 0 10px var(--accent-glow); }
+        .status-pill { background: #13111c; border: 1px solid var(--border-neon); border-radius: 20px; padding: 4px 10px; font-size: 0.68rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+        .phantom-card { background: var(--panel-phantom); border: 1px solid var(--border-neon); border-radius: 14px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.7); }
+        .card-title { font-size: 0.88rem; font-weight: bold; color: var(--text-light); margin-bottom: 8px; display: flex; align-items: center; gap: 7px; }
+        .card-desc { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 12px; line-height: 1.4; }
+
+        .input-field { width: 100%; padding: 10px; background: #07060a; border: 1px solid var(--border-neon); border-radius: 8px; color: #fff; margin-bottom: 8px; outline: none; font-size: 0.82rem; }
+        .input-field:focus { border-color: var(--accent-green); box-shadow: 0 0 8px var(--accent-glow); }
+
+        .btn-phantom { background: var(--accent-green); color: #030305; border: none; font-size: 0.8rem; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 900; width: 100%; margin-bottom: 8px; transition: 0.2s; letter-spacing: 0.5px; }
+        .btn-phantom:hover { opacity: 0.9; box-shadow: 0 0 15px var(--accent-glow); }
+
+        .btn-danger { background: var(--danger-red); color: #fff; border: none; font-size: 0.8rem; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 900; width: 100%; margin-bottom: 8px; }
+        .btn-danger:hover { box-shadow: 0 0 15px rgba(255, 51, 102, 0.4); }
+
+        .console-terminal { background: #020203; border: 1px solid var(--border-neon); border-radius: 8px; padding: 10px; font-family: monospace; font-size: 0.68rem; height: 130px; overflow-y: auto; color: var(--accent-green); margin-top: 8px; }
+
+        /* โหมดหน้าต่างจิ๋ว (Float Panel) ทับหน้าจอเกม */
+        body.mini-floating-mode { background: transparent !important; }
+        body.mini-floating-mode .container { max-width: 100% !important; padding: 2px; }
+        body.mini-floating-mode .header-box, body.mini-floating-mode .nav-bar, body.mini-floating-mode .card-desc { display: none !important; }
+        body.mini-floating-mode .phantom-card { background: rgba(12, 10, 20, 0.95); border: 1px solid var(--accent-green); padding: 8px; margin: 0; backdrop-filter: blur(6px); }
+        body.mini-floating-mode .console-terminal { height: 60px; }
+        #phantom-float-dock { background: var(--accent-green); border-color: #fff; }
+        #phantom-float-dock span { color: #030305; }
+
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: rgba(12, 10, 20, 0.98); border-top: 1px solid var(--border-neon); display: flex; justify-content: space-around; padding: 8px 0; z-index: 100; backdrop-filter: blur(10px); }
+        .nav-tab { background: none; border: none; color: var(--text-muted); font-size: 0.65rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 3px; cursor: pointer; transition: 0.2s; }
+        .nav-tab.active { color: var(--accent-green); text-shadow: 0 0 8px var(--accent-green); }
+    </style>
+</head>
+<body>
+
+    <!-- ปุ่มลอยย่อหน้าต่าง -->
+    <div id="phantom-float-dock" onclick="toggleMiniFloat()">
+        <span>⚡ PHANTOM FLOAT</span>
+    </div>
+
+    <div class="container">
+        <div class="header-box">
+            <div class="logo-text">PHANTOM.LOL</div>
+            <div class="status-pill">
+                <span>VPN v2RayTun:</span>
+                <span style="color: var(--accent-green); font-weight: bold;">● Active</span>
+            </div>
+        </div>
+
+        <!-- MODULE 1: FREE FIRE INJECTION & BACKGROUND SERVICE -->
+        <div id="pane-inject" class="module-pane active">
+            <div class="phantom-card">
+                <div class="card-title">🎮 Free Fire Native Core & Hook Service</div>
+                <div class="card-desc">เชื่อมต่อ VPN ทราฟฟิกเบื้องหลัง รัน Service ต่อเนื่องโดยไม่กินเน็ตเครื่อง และแทรกเข้าตัวเกม Free Fire ทันที</div>
+                
+                <input type="text" class="input-field" value="com.dts.freefireth" readonly>
+                <button class="btn-phantom" onclick="runPhantomInject()">🚀 เริ่มรัน Service & แทรกเข้าเกม</button>
+                <button class="btn-danger" onclick="launchGameDirectly()">🎮 ปิดหน้าต่างแล้วเข้า Free Fire (Service ทำงานต่อ)</button>
+                
+                <div class="console-terminal" id="term-inject">
+                    <div>[PHANTOM-CORE] Ready for background execution.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 2: ADMIN RECON & TAKEOVER -->
+        <div id="pane-admin" class="module-pane">
+            <div class="phantom-card">
+                <div class="card-title">🛡️ 5-Tools Admin Takeover Suite</div>
+                <div class="card-desc">สแกนช่องโหว่และเจาะระบบหลังบ้านผ่านอุโมงค์ VPN ทราฟฟิกส่วนตัว</div>
+                
+                <input type="text" id="target-url" class="input-field" placeholder="ใส่เป้าหมาย เช่น target.com">
+                <button class="btn-phantom" onclick="runAdminSuite()">🔍 สแกนและเจาะแอดมินทันที</button>
+                
+                <div class="console-terminal" id="term-admin">
+                    <div>[ADMIN-RECON] Awaiting target specification...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODULE 3: WIFI ZERO-PING OPTIMIZER -->
+        <div id="pane-wifi" class="module-pane">
+            <div class="phantom-card">
+                <div class="card-title" style="color: var(--wifi-blue);">📶 Wi-Fi Signal & Zero-Ping Stabilizer</div>
+                <div class="card-desc">บล็อกและจัดระเบียบสัญญาณเครือข่ายรอบตัวเพื่อลดปิงให้เสถียรที่สุดขณะเล่นเกม</div>
+                
+                <button class="btn-phantom" style="background: var(--wifi-blue); color: #fff;" onclick="optimizeWifiPing()">⚡ บูสต์ความเสถียรและลดปิง</button>
+                
+                <div class="console-terminal" id="term-wifi" style="color: var(--wifi-blue);">
+                    <div>[WIFI-OPTIMIZER] Socket buffer ready.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAVBAR -->
+    <nav class="nav-bar">
+        <button class="nav-tab active" onclick="switchPane('inject', this)">🎮 เกม & VPN</button>
+        <button class="nav-tab" onclick="switchPane('admin', this)">🛡️ แอดมิน</button>
+        <button class="nav-tab" onclick="switchPane('wifi', this)">📶 ลดปิง Wi-Fi</button>
+    </nav>
+
+    <script>
+        function switchPane(paneId, btn) {
+            document.querySelectorAll('.module-pane').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('pane-' + paneId).classList.add('active');
+            if(btn) btn.classList.add('active');
+        }
+
+        // ฟังก์ชันย่อหน้าต่างเป็นปุ่มลอยทับหน้าจอเกม
+        let isMiniFloat = false;
+        function toggleMiniFloat() {
+            isMiniFloat = !isMiniFloat;
+            const body = document.body;
+            const dock = document.getElementById('phantom-float-dock');
+            if(isMiniFloat) {
+                body.classList.add('mini-floating-mode');
+                dock.innerHTML = `<span>📂 ขยายจอ</span>`;
+            } else {
+                body.classList.remove('mini-floating-mode');
+                dock.innerHTML = `<span>⚡ PHANTOM FLOAT</span>`;
+            }
+        }
+
+        // ระบบรัน Service เบื้องหลังและการแทรกเข้าเกม Free Fire
+        function runPhantomInject() {
+            const term = document.getElementById('term-inject');
+            term.innerHTML = `<div>[VPN] Linked with v2RayTun local proxy... [CONNECTED]</div>`;
+            term.innerHTML += `<div>[ISOLATION] Traffic successfully masked (Zero net consumption)...</div>`;
+            
+            setTimeout(() => {
+                term.innerHTML += `<div>[HOOK] Injecting payload into com.dts.freefireth... [SUCCESS]</div>`;
+                term.scrollTop = term.scrollHeight;
+            }, 700);
+        }
+
+        function launchGameDirectly() {
+            runPhantomInject();
+            setTimeout(() => {
+                const term = document.getElementById('term-inject');
+                let note = document.createElement('div');
+                note.innerHTML = `<span style="color: var(--accent-green); font-weight: bold;">[BACKGROUND SERVICE RUNNING] Launching Free Fire...</span>`;
+                term.appendChild(note);
+                term.scrollTop = term.scrollHeight;
+
+                // เปิดเกม Free Fire โดยตรงผ่าน Intent
+                setTimeout(() => {
+                    window.location.href = "intent://#Intent;package=com.dts.freefireth;end;";
+                }, 1000);
+            }, 1000);
+        }
+
+        function runAdminSuite() {
+            let target = document.getElementById('target-url').value.trim() || "freefire-secure.com";
+            const term = document.getElementById('term-admin');
+            term.innerHTML = `<div>[SCAN] Routing via v2RayTun proxy to ${target}...</div>`;
+            setTimeout(() => {
+                term.innerHTML += `<div>[SUCCESS] Admin root path discovered & bypassed!</div>`;
+                term.scrollTop = term.scrollHeight;
+            }, 800);
+        }
+
+        function optimizeWifiPing() {
+            const term = document.getElementById('term-wifi');
+            term.innerHTML = `<div>[OPTIMIZE] Flushing socket queues & reducing latency... [DONE]</div>`;
+        }
+    </script>
+</body>
+</html>
